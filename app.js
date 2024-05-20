@@ -12,6 +12,8 @@ window.onload = function() {
         sessionItemsCount = items.length; // Set sessionItemsCount to the length of stored items
         renderItems();
     }
+
+    loadStoredBudget(); // Load stored budget on page load
 }
 
 function setBudget() {
@@ -36,30 +38,37 @@ function addItem() {
     const itemNameInput = document.getElementById('itemName');
     const itemAmountInput = document.getElementById('itemAmount');
     const itemCategoryInput = document.getElementById('itemCategory');
+    const budgetInput = document.getElementById('budget');
+    const budget = parseFloat(budgetInput.value);
 
     const itemName = itemNameInput.value;
     const itemAmount = parseFloat(itemAmountInput.value);
-    const itemCategory = itemCategoryInput.value.trim();
 
-    if (itemName.trim() === '' || isNaN(itemAmount) || itemAmount <= 0 || itemCategory === '') {
+    if (itemName.trim() === '' || isNaN(itemAmount) || itemAmount <= 0 || itemCategoryInput.value.trim() === '') {
         alert('Please enter valid item name, amount, and category.');
         return;
     }
 
-    items.push({ name: itemName, amount: itemAmount, category: itemCategory });
-    localStorage.setItem('items', JSON.stringify(items));
-
-    if (!categories.includes(itemCategory)) {
-        categories.push(itemCategory);
-        updateCategoryFilter();
+    // Check if adding the item exceeds the budget
+    if (totalAmount + itemAmount > budget) {
+        alert('Warning: Adding this item will exceed your budget!');
     }
+
+    items.push({ name: itemName, amount: itemAmount, category: itemCategoryInput.value.trim() });
+    localStorage.setItem('items', JSON.stringify(items));
 
     renderItems();
 
     totalAmount += itemAmount;
     updateTotal();
 
-    sessionItemsCount++; // Increment sessionItemsCount for each added item
+    if (totalAmount > budget) {
+        // Change the color of total amount and new items to red
+        document.getElementById('total').style.color = 'red';
+        document.querySelectorAll('.item').forEach(item => {
+            item.style.color = 'red';
+        });
+    }
 
     itemNameInput.value = '';
     itemAmountInput.value = '';
@@ -120,6 +129,8 @@ function renderItems(categoryFilter = 'all') {
 }
 
 function updateTotal() {
+    const budgetInput = document.getElementById('budget');
+    const budget = parseFloat(budgetInput.value);
     const totalDiv = document.getElementById('total');
-    totalDiv.textContent = `Total: ${totalAmount.toFixed(2)}`;
+    totalDiv.textContent = `Total: ${totalAmount.toFixed(2)} / ${budget.toFixed(2)}`;
 }
